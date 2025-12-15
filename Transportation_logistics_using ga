@@ -1,0 +1,97 @@
+import random
+import math
+
+# -----------------------------
+# Distance calculation
+# -----------------------------
+def distance(a, b):
+    return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+
+# -----------------------------
+# Fitness function
+# (Total route distance)
+# -----------------------------
+def fitness(route, depot):
+    total = 0
+    current = depot
+    for city in route:
+        total += distance(current, city)
+        current = city
+    total += distance(current, depot)  # return to depot
+    return total
+
+# -----------------------------
+# Create random chromosome
+# -----------------------------
+def create_route(locations):
+    route = locations[:]
+    random.shuffle(route)
+    return route
+
+# -----------------------------
+# Selection (Tournament)
+# -----------------------------
+def selection(population, depot):
+    a, b = random.sample(population, 2)
+    return a if fitness(a, depot) < fitness(b, depot) else b
+
+# -----------------------------
+# Crossover (Order crossover)
+# -----------------------------
+def crossover(parent1, parent2):
+    start, end = sorted(random.sample(range(len(parent1)), 2))
+    child = parent1[start:end]
+    for city in parent2:
+        if city not in child:
+            child.append(city)
+    return child
+
+# -----------------------------
+# Mutation (Swap)
+# -----------------------------
+def mutation(route, rate=0.1):
+    if random.random() < rate:
+        i, j = random.sample(range(len(route)), 2)
+        route[i], route[j] = route[j], route[i]
+
+# -----------------------------
+# Genetic Algorithm
+# -----------------------------
+def genetic_algorithm(locations, depot, pop_size=20, generations=100):
+    population = [create_route(locations) for _ in range(pop_size)]
+
+    for _ in range(generations):
+        new_population = []
+        for _ in range(pop_size):
+            parent1 = selection(population, depot)
+            parent2 = selection(population, depot)
+            child = crossover(parent1, parent2)
+            mutation(child)
+            new_population.append(child)
+        population = new_population
+
+    best_route = min(population, key=lambda r: fitness(r, depot))
+    return best_route, fitness(best_route, depot)
+
+# -----------------------------
+# Main Program
+# -----------------------------
+depot = (0, 0)
+
+locations = [
+    (2, 3),
+    (5, 4),
+    (6, 1),
+    (3, 7),
+    (8, 2)
+]
+
+best_route, best_distance = genetic_algorithm(locations, depot)
+
+print("Best Route:")
+print("Depot -> ", end="")
+for city in best_route:
+    print(city, "-> ", end="")
+print("Depot")
+
+print("Total Distance:", round(best_distance, 2))
